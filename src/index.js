@@ -56,6 +56,7 @@ const typeDefs = `
         updateTodoListTitle(data: updateTodoListTitleInput!): Todo!
         updateTaskTodoList(data: updateTaskTodoListInput!): Task!
         deleteTodoList(id: ID!): Todo!
+        deleteTask(id: ID!,taskIndex: Int!): Task!
     }
 
     input createTodoListInput{
@@ -186,14 +187,25 @@ const resolvers  = {
             }
 
             const deleteTodoList = Todos.splice(todoListIndex,1);
-
             // Now delete associated todo list task
             Tasks = Tasks.filter((task)=>{
                     return task.title !== args.id;
             });
 
-            console.log(deleteTodoList);
             return deleteTodoList[0];
+        },
+        deleteTask(parent, args, ctx, info){
+            const taskList = Tasks.find((task)=>{
+                return task.id === args.id;
+            });
+
+            if(!taskList){
+                throw new Error("Task not found");
+            }
+
+            taskList.task.splice(args.taskIndex,1);
+            
+            return taskList;
         }
     },
 
