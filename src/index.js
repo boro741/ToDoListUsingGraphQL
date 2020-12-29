@@ -51,10 +51,30 @@ const typeDefs = `
     }
 
     type Mutation {
-        createTodoList(title: String!): Todo!
-        addTaskTodoList(title: String! ,tasks: [String!]!): Task!
-        updateTodoListTitle(id: ID!, title: String!): Todo!
-        updateTaskTodoList(title: String! ,taskIndex: Int!, task: String!): Task!
+        createTodoList(data: createTodoListInput!): Todo!
+        addTaskTodoList(data: addTaskTodoListInput!): Task!
+        updateTodoListTitle(data: updateTodoListTitleInput!): Todo!
+        updateTaskTodoList(data: updateTaskTodoListInput!): Task!
+    }
+
+    input createTodoListInput{
+        title: String!
+    }
+
+    input addTaskTodoListInput{
+        title: String! 
+        tasks: [String!]!
+    }
+
+    input updateTodoListTitleInput{
+        id: ID!
+        title: String!
+    }
+
+    input updateTaskTodoListInput{
+        title: String!
+        taskIndex: Int!
+        task: String!
     }
 
     type Todo {
@@ -94,16 +114,16 @@ const resolvers  = {
     Mutation: {
         createTodoList(parent, args, ctx, info){
             const titleTaken = Todos.some((todo)=>{
-                return todo.title === args.title;
+                return todo.title === args.data.title;
             });
 
             if(titleTaken){
-                throw new Error(`Title with "${args.title}" already exists.`);
+                throw new Error(`Title with "${args.data.title}" already exists.`);
             }
 
             const todo = {
                 id: uuidv4(),
-                title: args.title
+                title: args.data.title
             }
 
             Todos.push(todo);
@@ -113,16 +133,16 @@ const resolvers  = {
         addTaskTodoList(parent, args, ctx, info){
             // Is Todo List exist with given title of Task Obj
             const todoListExist = Todos.some((todo)=>{
-                return todo.id === args.title;
+                return todo.id === args.data.title;
             });
 
             if(!todoListExist)
-                throw new Error(`Todo List with "${args.title}" does not exists.`);
+                throw new Error(`Todo List with "${args.data.title}" does not exists.`);
             
             const task = {
                 id: uuidv4(),
-                task: args.tasks,
-                title: args.title
+                task: args.data.tasks,
+                title: args.data.title
             };
             
             Tasks.push(task);
@@ -132,26 +152,26 @@ const resolvers  = {
             // Is todoList exist in Todo obj
             const todoList = Todos.find((todo)=>{
                 // Is (Inside Task Obj) args.id: "some id" exists in Todo DB?
-                return todo.id === args.id;
+                return todo.id === args.data.id;
             });
 
             if(!todoList)
-                throw new Error(`Todo List with "${args.title}" does not exists.`);
+                throw new Error(`Todo List with "${args.data.title}" does not exists.`);
             
-            todoList.title = args.title;
+            todoList.title = args.data.title;
 
             return todoList;
         },
 
         updateTaskTodoList(parent, args, ctx, info){
             const taskList = Tasks.find((task)=>{
-                return task.title === args.title;
+                return task.title === args.data.title;
             });
 
             if(!taskList)
-                throw new Error(`Todo List with "${args.title}" does not exists.`);
+                throw new Error(`Todo List with "${args.data.title}" does not exists.`);
 
-            taskList.task[args.taskIndex] = args.task;
+            taskList.task[args.data.taskIndex] = args.data.task;
 
             return taskList;
         }
