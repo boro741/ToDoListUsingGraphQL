@@ -1,121 +1,30 @@
 import {GraphQLServer} from 'graphql-yoga';
 import uuidv4 from "uuid/v4";
-// DB
-let Todos = [{
-    id: '1',
-    title: "Learn DS",
-},
-{
-    id: '2',
-    title: "Prepare resume",
-},
-{
-    id: '3',
-    title: "Learn Science",
-},
-];
-
-let Tasks = [
-{
-    id: '1',
-    task:[
-        "1. Arrays",
-        "2. Trees",
-        "3. Dynamic Programming"
-    ],
-    title: '1'
-},
-{
-    id: '2',
-    task:[
-        "1. Prepare resume for Amazon",
-        "2. Prepare resume for Flipkart"
-    ],
-    title: '2'
-},
-{
-    id: '3',
-    task:[
-        "1. Learn Thermodynamics",
-        "2. Learn Electrostatics"
-    ],
-    title: '3'
-}
-];
-
-// Having difficulty in writing mutation in schema when there are association between object properties
-const typeDefs = `
-    type Query{
-        todo(title: String): [Todo!]!
-        task(title: String): [Task!]!
-    }
-
-    type Mutation {
-        createTodoList(data: createTodoListInput!): Todo!
-        addTaskTodoList(data: addTaskTodoListInput!): Task!
-        updateTodoListTitle(data: updateTodoListTitleInput!): Todo!
-        updateTaskTodoList(data: updateTaskTodoListInput!): Task!
-        deleteTodoList(id: ID!): Todo!
-        deleteTask(id: ID!,taskIndex: Int!): Task!
-    }
-
-    input createTodoListInput{
-        title: String!
-    }
-
-    input addTaskTodoListInput{
-        title: String! 
-        tasks: [String!]!
-    }
-
-    input updateTodoListTitleInput{
-        id: ID!
-        title: String!
-    }
-
-    input updateTaskTodoListInput{
-        title: String!
-        taskIndex: Int!
-        task: String!
-    }
-
-    type Todo {
-        id: ID!
-        title: String!
-        tasks: [Task!]!
-    }
-
-    type Task {
-        id: ID!
-        task: [String!]!
-        title: Todo!
-    }
-`;
-
+import db from './db';
 
 const resolvers  = {
     Query: {
-        todo(parent, args, ctx, info){
+        todo(parent, args, {db}, info){
             if(args.title == null) 
-                return Todos;
+                return db.Todos;
 
             return Todos.filter((todo)=>{
                 return todo.title.toLowerCase().includes(args.title.toLowerCase());
             });
         },
-        task(parent, args, ctx, info){
+        task(parent, args, {db}, info){
             if(args.title == null){
-                return Tasks;
+                return db.Tasks;
             }
 
-            return Tasks.filter((task) => {
-                return Todos.find((todo) => todo.id === task.title).title.toLowerCase().includes(args.title.toLowerCase());
+            return db.Tasks.filter((task) => {
+                return db.Todos.find((todo) => todo.id === task.title).title.toLowerCase().includes(args.title.toLowerCase());
             });
         }
     },
     Mutation: {
-        createTodoList(parent, args, ctx, info){
-            const titleTaken = Todos.some((todo)=>{
+        createTodoList(parent, args, {db}, info){
+            const titleTaken = db.Todos.some((todo)=>{
                 return todo.title === args.data.title;
             });
 
@@ -128,13 +37,13 @@ const resolvers  = {
                 title: args.data.title
             }
 
-            Todos.push(todo);
+            db.Todos.push(todo);
 
             return todo;
         },
-        addTaskTodoList(parent, args, ctx, info){
+        addTaskTodoList(parent, args, {db}, info){
             // Is Todo List exist with given title of Task Obj
-            const todoListExist = Todos.some((todo)=>{
+            const todoListExist = db.Todos.some((todo)=>{
                 return todo.id === args.data.title;
             });
 
@@ -147,12 +56,12 @@ const resolvers  = {
                 title: args.data.title
             };
             
-            Tasks.push(task);
+            db.Tasks.push(task);
             return task;
         },
-        updateTodoListTitle(parent, args, ctx, info){
+        updateTodoListTitle(parent, args, {db}, info){
             // Is todoList exist in Todo obj
-            const todoList = Todos.find((todo)=>{
+            const todoList = db.Todos.find((todo)=>{
                 // Is (Inside Task Obj) args.id: "some id" exists in Todo DB?
                 return todo.id === args.data.id;
             });
@@ -165,8 +74,8 @@ const resolvers  = {
             return todoList;
         },
 
-        updateTaskTodoList(parent, args, ctx, info){
-            const taskList = Tasks.find((task)=>{
+        updateTaskTodoList(parent, args, {db}, info){
+            const taskList = db.Tasks.find((task)=>{
                 return task.title === args.data.title;
             });
 
@@ -177,8 +86,8 @@ const resolvers  = {
 
             return taskList;
         },
-        deleteTodoList(parent, args, ctx, info){
-            const todoListIndex = Todos.findIndex((todo)=>{
+        deleteTodoList(parent, args, {db}, info){
+            const todoListIndex = db.Todos.findIndex((todo)=>{
                 return todo.id === args.id;
             });
 
@@ -188,14 +97,14 @@ const resolvers  = {
 
             const deleteTodoList = Todos.splice(todoListIndex,1);
             // Now delete associated todo list task
-            Tasks = Tasks.filter((task)=>{
+            db.Tasks = db.Tasks.filter((task)=>{
                     return task.title !== args.id;
             });
 
             return deleteTodoList[0];
         },
-        deleteTask(parent, args, ctx, info){
-            const taskList = Tasks.find((task)=>{
+        deleteTask(parent, args, {db}, info){
+            const taskList = db.Tasks.find((task)=>{
                 return task.id === args.id;
             });
 
@@ -210,9 +119,9 @@ const resolvers  = {
     },
 
     Task: {
-        title(parent, args, ctx, info) {
+        title(parent, args, {db}, info) {
             // Here parent is Task Object
-            return Todos.find((todo) => {
+            return db.Todos.find((todo) => {
                 return todo.id === parent.title;
             });
         }
@@ -220,8 +129,8 @@ const resolvers  = {
     },
 
     Todo: {
-        tasks(parent, args, ctx, info){
-            return Tasks.filter((task)=>{
+        tasks(parent, args, {db}, info){
+            return db.Tasks.filter((task)=>{
                 return task.title === parent.id;
             });
         }
@@ -230,8 +139,11 @@ const resolvers  = {
 
 
 const server = new GraphQLServer({
-    typeDefs,
-    resolvers
+    typeDefs: './src/schema.graphql',
+    resolvers,
+    context: {
+        db
+    }
 });
 
 

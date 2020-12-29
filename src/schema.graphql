@@ -1,0 +1,45 @@
+type Query{
+        todo(title: String): [Todo!]!
+        task(title: String): [Task!]!
+}
+
+type Mutation {
+    createTodoList(data: createTodoListInput!): Todo!
+    addTaskTodoList(data: addTaskTodoListInput!): Task!
+    updateTodoListTitle(data: updateTodoListTitleInput!): Todo!
+    updateTaskTodoList(data: updateTaskTodoListInput!): Task!
+    deleteTodoList(id: ID!): Todo!
+    deleteTask(id: ID!,taskIndex: Int!): Task!
+}
+
+input createTodoListInput{
+    title: String!
+}
+
+input addTaskTodoListInput{
+    title: String! 
+    tasks: [String!]!
+}
+
+input updateTodoListTitleInput{
+    id: ID!
+    title: String!
+}
+
+input updateTaskTodoListInput{
+    title: String!
+    taskIndex: Int!
+    task: String!
+}
+
+type Todo {
+    id: ID!
+    title: String!
+    tasks: [Task!]!
+}
+
+type Task {
+    id: ID!
+    task: [String!]!
+    title: Todo!
+}
