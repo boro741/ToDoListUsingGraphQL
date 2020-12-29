@@ -53,18 +53,20 @@ const typeDefs = `
     type Mutation {
         createTodoList(title: String!): Todo!
         addTaskTodoList(title: String! ,tasks: [String!]!): Task!
+        updateTodoListTitle(id: ID!, title: String!): Todo!
+        updateTaskTodoList(title: String! ,taskIndex: Int!, task: String!): Task!
     }
 
     type Todo {
         id: ID!
         title: String!
-        tasks: [Task]
+        tasks: [Task!]!
     }
 
     type Task {
         id: ID!
         task: [String!]!
-        title: Todo
+        title: Todo!
     }
 `;
 
@@ -109,6 +111,7 @@ const resolvers  = {
             return todo;
         },
         addTaskTodoList(parent, args, ctx, info){
+            // Is Todo List exist with given title of Task Obj
             const todoListExist = Todos.some((todo)=>{
                 return todo.id === args.title;
             });
@@ -124,6 +127,33 @@ const resolvers  = {
             
             Tasks.push(task);
             return task;
+        },
+        updateTodoListTitle(parent, args, ctx, info){
+            // Is todoList exist in Todo obj
+            const todoList = Todos.find((todo)=>{
+                // Is (Inside Task Obj) args.id: "some id" exists in Todo DB?
+                return todo.id === args.id;
+            });
+
+            if(!todoList)
+                throw new Error(`Todo List with "${args.title}" does not exists.`);
+            
+            todoList.title = args.title;
+
+            return todoList;
+        },
+
+        updateTaskTodoList(parent, args, ctx, info){
+            const taskList = Tasks.find((task)=>{
+                return task.title === args.title;
+            });
+
+            if(!taskList)
+                throw new Error(`Todo List with "${args.title}" does not exists.`);
+
+            taskList.task[args.taskIndex] = args.task;
+
+            return taskList;
         }
     },
 
