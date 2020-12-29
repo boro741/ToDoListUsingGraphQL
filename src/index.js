@@ -1,7 +1,7 @@
 import {GraphQLServer} from 'graphql-yoga';
 import uuidv4 from "uuid/v4";
 // DB
-const Todos = [{
+let Todos = [{
     id: '1',
     title: "Learn DS",
 },
@@ -15,7 +15,7 @@ const Todos = [{
 },
 ];
 
-const Tasks = [
+let Tasks = [
 {
     id: '1',
     task:[
@@ -55,6 +55,7 @@ const typeDefs = `
         addTaskTodoList(data: addTaskTodoListInput!): Task!
         updateTodoListTitle(data: updateTodoListTitleInput!): Todo!
         updateTaskTodoList(data: updateTaskTodoListInput!): Task!
+        deleteTodoList(id: ID!): Todo!
     }
 
     input createTodoListInput{
@@ -174,6 +175,25 @@ const resolvers  = {
             taskList.task[args.data.taskIndex] = args.data.task;
 
             return taskList;
+        },
+        deleteTodoList(parent, args, ctx, info){
+            const todoListIndex = Todos.findIndex((todo)=>{
+                return todo.id === args.id;
+            });
+
+            if(todoListIndex === -1){
+                throw new Error("Todo list not found");
+            }
+
+            const deleteTodoList = Todos.splice(todoListIndex,1);
+
+            // Now delete associated todo list task
+            Tasks = Tasks.filter((task)=>{
+                    return task.title !== args.id;
+            });
+
+            console.log(deleteTodoList);
+            return deleteTodoList[0];
         }
     },
 
