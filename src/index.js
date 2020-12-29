@@ -61,7 +61,7 @@ const typeDefs = `
     type Todo {
         id: ID!
         title: String!
-        task: [Task!]!
+        tasks: [Task!]!
     }
 
     type Task {
@@ -88,6 +88,8 @@ const resolvers  = {
             });
         }
     },
+
+    // Associating between Task title with Parent Object (Todo) title   
     Task: {
         title(parent, args, ctx, info) {
             return Todos.find((todo) => {
@@ -96,8 +98,10 @@ const resolvers  = {
         }
         
     },
+
+    // Associating between Task task property with Parent Object (Task) task prpoerty
     Todo: {
-        task(parent, args, ctx, info){
+        tasks(parent, args, ctx, info){
             return Tasks.filter((task)=>{
                 return task.title == parent.id;
             });
